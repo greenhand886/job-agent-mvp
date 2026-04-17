@@ -1,0 +1,5 @@
+.idea/
+__pycache__/
+*.pyc
+.env
+data/analysis_history.json
