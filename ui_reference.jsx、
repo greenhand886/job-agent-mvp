@@ -1,0 +1,525 @@
+import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Upload,
+  Sparkles,
+  FileText,
+  Image as ImageIcon,
+  Brain,
+  ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
+  Gauge,
+  Wand2,
+  Download,
+  Layers3,
+  ShieldCheck,
+  Stars,
+  Clock3,
+  ChevronRight,
+} from "lucide-react";
+
+const chips = ["PDF Resume", "Image JD", "AI Match", "Rewrite Loop", "PDF Export"];
+
+const analysisMock = {
+  score: 68,
+  strengths: [
+    "Python 与数据处理基础较强，能快速理解业务数据",
+    "有学生成绩分析项目，可证明完整项目落地能力",
+    "表达清晰，适合做偏产品化的 AI 应用交付",
+  ],
+  gaps: [
+    "缺少接口开发与多模型集成的明确经历",
+    "Agent 项目表达偏弱，简历没有突出 loop 与工具调用",
+    "项目成果数字化不足，缺少量化结果",
+  ],
+  plan: [
+    "强化项目标题与一句话定位，突出 Agent 场景",
+    "补充工具调用、循环修正、结构化输出等关键词",
+    "把项目经历改成更偏招聘场景的结果导向表达",
+  ],
+};
+
+function GlassCard({ children, className = "" }) {
+  return (
+    <div
+      className={`rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)] ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SectionTitle({ eyebrow, title, desc }) {
+  return (
+    <div className="space-y-2">
+      <div className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80">{eyebrow}</div>
+      <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">{title}</h2>
+      {desc ? <p className="max-w-3xl text-sm leading-7 text-slate-300">{desc}</p> : null}
+    </div>
+  );
+}
+
+function StatPill({ icon: Icon, label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+      <div className="mb-2 flex items-center gap-2 text-slate-300">
+        <Icon className="h-4 w-4 text-cyan-300" />
+        <span className="text-xs uppercase tracking-[0.22em]">{label}</span>
+      </div>
+      <div className="text-lg font-semibold text-white">{value}</div>
+    </div>
+  );
+}
+
+function UploadCard({ icon: Icon, title, sub, hint }) {
+  return (
+    <GlassCard className="p-6">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-cyan-300">
+              <Icon className="h-5 w-5" />
+            </div>
+            <h3 className="text-2xl font-semibold text-white">{title}</h3>
+          </div>
+          <p className="text-sm leading-7 text-slate-300">{sub}</p>
+        </div>
+        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
+          Required
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-dashed border-white/15 bg-slate-950/50 p-5">
+        <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+          <div className="rounded-2xl bg-white/5 p-4 text-slate-200">
+            <Upload className="h-6 w-6" />
+          </div>
+          <div className="text-base font-medium text-white">拖拽上传或点击选择文件</div>
+          <div className="text-sm text-slate-400">{hint}</div>
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+function StepItem({ done, current, title, desc }) {
+  return (
+    <div className="flex gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+      <div
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
+          done
+            ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-300"
+            : current
+              ? "border-cyan-400/30 bg-cyan-400/15 text-cyan-300"
+              : "border-white/10 bg-white/5 text-slate-400"
+        }`}
+      >
+        {done ? <CheckCircle2 className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </div>
+      <div>
+        <div className="mb-1 flex items-center gap-2">
+          <span className="font-medium text-white">{title}</span>
+          {current ? (
+            <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-cyan-300">
+              Running
+            </span>
+          ) : null}
+        </div>
+        <p className="text-sm leading-6 text-slate-400">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function ListCard({ title, items, tone = "default" }) {
+  const toneClass = useMemo(() => {
+    if (tone === "good") return "from-emerald-400/10 to-transparent border-emerald-400/15";
+    if (tone === "warn") return "from-amber-400/10 to-transparent border-amber-400/15";
+    return "from-cyan-400/10 to-transparent border-cyan-400/15";
+  }, [tone]);
+
+  return (
+    <div className={`rounded-3xl border bg-gradient-to-br ${toneClass} p-6`}>
+      <h3 className="mb-4 text-xl font-semibold text-white">{title}</h3>
+      <div className="space-y-3">
+        {items.map((item, idx) => (
+          <div key={idx} className="flex gap-3 rounded-2xl bg-black/20 px-4 py-3">
+            <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-cyan-300" />
+            <p className="text-sm leading-7 text-slate-200">{item}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ScoreRing({ score }) {
+  const dash = 339.292;
+  const progress = dash - (dash * score) / 100;
+  const good = score >= 75;
+  return (
+    <GlassCard className="p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Match Score</div>
+          <div className="mt-2 text-2xl font-semibold text-white">岗位匹配度</div>
+        </div>
+        <div
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            good
+              ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+              : "border border-amber-400/20 bg-amber-400/10 text-amber-300"
+          }`}
+        >
+          {good ? "可直接投递" : "建议优化后投递"}
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
+        <div className="relative h-44 w-44">
+          <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              fill="none"
+              stroke="url(#grad)"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={dash}
+              strokeDashoffset={progress}
+            />
+            <defs>
+              <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#67e8f9" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="text-4xl font-bold text-white">{score}</div>
+            <div className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">/ 100</div>
+          </div>
+        </div>
+
+        <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2">
+          <StatPill icon={Gauge} label="阈值" value="75 分" />
+          <StatPill icon={Clock3} label="预计耗时" value="18 秒" />
+          <StatPill icon={Layers3} label="改写模式" value="按 Section 执行" />
+          <StatPill icon={ShieldCheck} label="安全策略" value="先分析，再生成" />
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+export default function ResumeAgentMaobuInspiredUI() {
+  const [stage, setStage] = useState("analysis");
+
+  const canRewrite = analysisMock.score < 75;
+
+  return (
+    <div className="min-h-screen bg-[#020617] text-white">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-8%] top-[-10%] h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute right-[-6%] top-[12%] h-[480px] w-[480px] rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="absolute bottom-[-12%] left-[25%] h-[420px] w-[420px] rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(circle_at_center,black,transparent_78%)]" />
+      </div>
+
+      <div className="relative mx-auto flex max-w-[1600px] gap-6 px-4 py-6 md:px-6 lg:px-8">
+        <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] w-[300px] shrink-0 xl:block">
+          <GlassCard className="flex h-full flex-col justify-between p-5">
+            <div>
+              <div className="mb-8 flex items-center gap-3">
+                <div className="rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 p-3 shadow-lg shadow-cyan-500/20">
+                  <Stars className="h-5 w-5 text-slate-950" />
+                </div>
+                <div>
+                  <div className="text-sm text-slate-400">Resume Rewrite Agent</div>
+                  <div className="text-lg font-semibold">Control Center</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  ["当前模式", "简历分析 + 条件生成"],
+                  ["触发规则", "匹配分低于 75 分"],
+                  ["当前模型", "Qwen Plus / VL"],
+                  ["执行策略", "先解析，再评估，再决定"],
+                ].map(([k, v]) => (
+                  <div key={k} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                    <div className="mb-1 text-xs uppercase tracking-[0.22em] text-slate-500">{k}</div>
+                    <div className="text-sm leading-6 text-slate-200">{v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-400/15 bg-gradient-to-br from-cyan-400/10 to-violet-500/10 p-4">
+              <div className="mb-2 flex items-center gap-2 text-cyan-300">
+                <Brain className="h-4 w-4" />
+                <span className="text-sm font-medium">Agent Workflow</span>
+              </div>
+              <p className="text-sm leading-6 text-slate-300">
+                支持 PDF 简历、图片 JD、结构化匹配分析、按 section 改写与 PDF 导出。
+              </p>
+            </div>
+          </GlassCard>
+        </aside>
+
+        <main className="min-w-0 flex-1 space-y-6">
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
+            <GlassCard className="overflow-hidden p-8 md:p-10">
+              <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
+                <div>
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/10 px-4 py-2 text-xs uppercase tracking-[0.26em] text-cyan-300">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    AI Resume Intelligence
+                  </div>
+                  <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-white md:text-6xl md:leading-[1.05]">
+                    面向岗位的智能简历优化工作台
+                  </h1>
+                  <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300 md:text-lg">
+                    上传 PDF 简历与岗位 JD，系统先做结构化解析和匹配评估。只有当匹配不足时，才启动改写计划、检查 loop 与新版 PDF 生成流程。
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {chips.map((chip) => (
+                      <span
+                        key={chip}
+                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200"
+                      >
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <StatPill icon={FileText} label="输入源" value="PDF + Image + Text" />
+                  <StatPill icon={Brain} label="核心流程" value="分析优先" />
+                  <StatPill icon={Wand2} label="改写方式" value="Section 级别" />
+                  <StatPill icon={Download} label="输出结果" value="新版 PDF" />
+                </div>
+              </div>
+            </GlassCard>
+          </motion.section>
+
+          <section className="space-y-5">
+            <SectionTitle
+              eyebrow="Input"
+              title="资料输入区"
+              desc="整个操作只保留一条主路径：上传简历与 JD → 开始分析 → 判断是否允许优化 → 一键生成改进版 PDF。"
+            />
+
+            <div className="grid gap-6 xl:grid-cols-2">
+              <UploadCard
+                icon={FileText}
+                title="PDF 简历"
+                sub="上传原始简历 PDF。系统会先提取文本，再做结构化解析与 section 拆分。"
+                hint="支持 PDF，建议上传文本型 PDF，效果更稳定"
+              />
+
+              <div className="space-y-6">
+                <UploadCard
+                  icon={ImageIcon}
+                  title="岗位 JD 图片"
+                  sub="优先支持招聘截图识别，也兼容图片式 JD。系统会先 OCR / 视觉理解，再结构化提取岗位要求。"
+                  hint="支持 PNG / JPG / WEBP，适合招聘平台截图"
+                />
+
+                <GlassCard className="p-6">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="rounded-2xl border border-violet-400/20 bg-violet-400/10 p-3 text-violet-300">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold text-white">文本 JD</div>
+                      <div className="text-sm text-slate-400">没有截图时可直接粘贴</div>
+                    </div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4 text-sm leading-7 text-slate-400">
+                    在这里粘贴岗位职责、任职要求、优先条件、技术关键词等内容……
+                  </div>
+                </GlassCard>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="space-y-6">
+              <GlassCard className="p-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Primary Action</div>
+                    <h3 className="mt-2 text-2xl font-semibold text-white">开始分析匹配度</h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      先做解析、提取、结构化和评分。评分达到阈值时不生成优化简历，避免无意义改写。
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setStage(stage === "analysis" ? "rewrite" : "analysis")}
+                    className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-violet-500 px-6 py-4 text-sm font-semibold text-slate-950 shadow-[0_16px_40px_rgba(56,189,248,0.18)] transition hover:scale-[1.01]"
+                  >
+                    {stage === "analysis" ? "模拟分析完成" : "重置为分析阶段"}
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </button>
+                </div>
+              </GlassCard>
+
+              <GlassCard className="p-6">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-cyan-300">
+                    <Brain className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Execution</div>
+                    <div className="text-2xl font-semibold text-white">执行进度</div>
+                  </div>
+                </div>
+
+                <div className="mb-5 h-2 overflow-hidden rounded-full bg-white/5">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-700 ${
+                      stage === "analysis" ? "w-[42%]" : "w-full"
+                    }`}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <StepItem
+                    done={true}
+                    current={false}
+                    title="解析简历 PDF"
+                    desc="提取文本、分段、识别简历 section 与字段。"
+                  />
+                  <StepItem
+                    done={true}
+                    current={false}
+                    title="提取并结构化 JD"
+                    desc="优先解析图片 JD，其次使用文本 JD 作为补充。"
+                  />
+                  <StepItem
+                    done={true}
+                    current={false}
+                    title="岗位匹配分析"
+                    desc="输出匹配分数、优势、缺口与一句话结论。"
+                  />
+                  <StepItem
+                    done={stage === "rewrite"}
+                    current={stage === "analysis" ? false : true}
+                    title="按 Section 执行改写"
+                    desc="只有分数低于阈值时，才生成改写计划并开始处理。"
+                  />
+                  <StepItem
+                    done={stage === "rewrite"}
+                    current={false}
+                    title="检查与修正 Loop + PDF 导出"
+                    desc="循环检查内容缺失、措辞冲突、关键词覆盖，再导出新版 PDF。"
+                  />
+                </div>
+              </GlassCard>
+            </div>
+
+            <div className="space-y-6">
+              <ScoreRing score={analysisMock.score} />
+
+              <div className="grid gap-6 xl:grid-cols-2">
+                <ListCard title="你的优势" items={analysisMock.strengths} tone="good" />
+                <ListCard title="主要缺口" items={analysisMock.gaps} tone="warn" />
+              </div>
+
+              <ListCard title="改写计划" items={analysisMock.plan} />
+
+              <GlassCard className="p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-2">
+                    <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Decision</div>
+                    <h3 className="text-2xl font-semibold text-white">生成优化简历</h3>
+                    <p className="max-w-2xl text-sm leading-7 text-slate-300">
+                      {canRewrite
+                        ? "当前分数低于阈值，允许进入第二阶段。点击后将自动执行改写计划、检查 loop 与新版 PDF 生成。"
+                        : "当前分数已达到阈值，不建议自动改写，以免过度优化。"}
+                    </p>
+                  </div>
+
+                  {canRewrite ? (
+                    <button className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-6 py-4 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/15">
+                      <Wand2 className="h-4 w-4" />
+                      一键生成改进版 PDF
+                    </button>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-5 py-4 text-sm font-medium text-emerald-300">
+                      <CheckCircle2 className="h-4 w-4" />
+                      当前无需自动优化
+                    </div>
+                  )}
+                </div>
+              </GlassCard>
+
+              <GlassCard className="overflow-hidden p-0">
+                <div className="border-b border-white/10 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Preview</div>
+                      <div className="mt-1 text-xl font-semibold text-white">新版简历预览</div>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
+                      Generated PDF
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-b from-white to-slate-100 p-6 text-slate-900">
+                  <div className="mx-auto max-w-2xl rounded-[28px] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-400/20">
+                    <div className="border-b border-slate-200 pb-5">
+                      <div className="text-3xl font-bold">陈可挺</div>
+                      <div className="mt-2 text-sm text-slate-500">AI Agent / 数据应用方向 · 温州</div>
+                    </div>
+                    <div className="grid gap-5 pt-6 md:grid-cols-[0.9fr_1.1fr]">
+                      <div className="space-y-4">
+                        <div>
+                          <div className="mb-2 text-sm font-semibold text-slate-900">技能标签</div>
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            {['Python', 'Pandas', 'LLM API', 'Streamlit', 'Prompting'].map((tag) => (
+                              <span key={tag} className="rounded-full bg-slate-100 px-3 py-1">{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="mb-2 text-sm font-semibold text-slate-900">优化摘要</div>
+                          <p className="text-sm leading-6 text-slate-600">
+                            强化了 Agent loop、结构化输出、招聘场景落地和结果导向表达。
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="mb-2 text-sm font-semibold text-slate-900">项目经历</div>
+                          <p className="text-sm leading-6 text-slate-700">
+                            Job Agent MVP：支持 JD 解析、简历匹配分析、条件触发式改写、检查修正 loop 与 PDF 导出。
+                          </p>
+                        </div>
+                        <div>
+                          <div className="mb-2 text-sm font-semibold text-slate-900">岗位贴合点</div>
+                          <p className="text-sm leading-6 text-slate-700">
+                            更突出数据处理、接口理解、AI 应用调试和求职工作流设计能力。
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  );
+}
